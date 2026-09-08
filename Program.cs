@@ -4,7 +4,11 @@ Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
 Application.EnableVisualStyles();
 Application.SetCompatibleTextRenderingDefault(false);
 
-using var instance = new Mutex(true, "Local\\CursorGoblin", out var isFirstInstance);
+var isSmokeTest = args.Contains("--smoke-test", StringComparer.OrdinalIgnoreCase);
+var mutexName = isSmokeTest
+    ? $"Local\\CursorGoblin.SmokeTest.{Environment.ProcessId}"
+    : "Local\\CursorGoblin";
+using var instance = new Mutex(true, mutexName, out var isFirstInstance);
 if (!isFirstInstance)
 {
     MessageBox.Show("CursorGoblin is already running.", "CursorGoblin",
@@ -13,6 +17,11 @@ if (!isFirstInstance)
 }
 
 var settings = AppSettings.Load();
+if (isSmokeTest)
+{
+    settings.OverlayEnabled = false;
+    settings.HideOriginal = false;
+}
 using var cursorStore = new CursorStore();
 try
 {
@@ -26,9 +35,9 @@ catch (Exception exception)
 }
 
 using var overlay = new CursorOverlayForm(cursorStore, settings);
-using var configuration = new ConfigurationForm(overlay, cursorStore, settings);
+using var configuration = new ConfigurationForm(overlay, cursorStore, settings, !isSmokeTest);
 using var smokeTimer = new System.Windows.Forms.Timer { Interval = 1000 };
-if (args.Contains("--smoke-test", StringComparer.OrdinalIgnoreCase))
+if (isSmokeTest)
 {
     smokeTimer.Tick += (_, _) =>
     {

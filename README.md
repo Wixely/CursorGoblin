@@ -2,6 +2,8 @@
 
 CursorGoblin is a small, Windows-only cursor overlay for streaming and screen-capture workflows. It draws a software-rendered, click-through copy over the active Windows cursor, including pointer, hand, text, wait, and resize variants.
 
+The original project artwork is stored in `Assets\CursorGoblin.png`; `tools\Create-Icon.ps1` creates the multi-resolution Windows icon used by the executable and configuration form. The artwork was generated specifically for CursorGoblin and does not use third-party icon assets.
+
 ## Features
 
 - Mirrors the cursor currently selected by Windows.

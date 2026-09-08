@@ -10,14 +10,15 @@ internal sealed class ConfigurationForm : Form
     private readonly Button colourButton;
     private readonly Label statusLabel;
 
-    internal ConfigurationForm(CursorOverlayForm overlay, CursorStore cursorStore, AppSettings settings)
+    internal ConfigurationForm(CursorOverlayForm overlay, CursorStore cursorStore, AppSettings settings,
+        bool persistSettings = true)
     {
         this.overlay = overlay;
         this.cursorStore = cursorStore;
         this.settings = settings;
 
         Text = "CursorGoblin";
-        Icon = SystemIcons.Application;
+        Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath) ?? SystemIcons.Application;
         StartPosition = FormStartPosition.CenterScreen;
         MinimumSize = new Size(450, 365);
         ClientSize = new Size(470, 390);
@@ -141,7 +142,8 @@ internal sealed class ConfigurationForm : Form
         Controls.Add(layout);
 
         AcceptButton = refreshButton;
-        FormClosing += (_, _) => settings.Save();
+        if (persistSettings)
+            FormClosing += (_, _) => settings.Save();
     }
 
     private void ChooseColour(object? sender, EventArgs eventArgs)

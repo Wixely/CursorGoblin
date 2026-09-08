@@ -13,5 +13,6 @@
     <PublishTrimmed>false</PublishTrimmed>
     <InvariantGlobalization>true</InvariantGlobalization>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\CursorGoblin.ico</ApplicationIcon>
   </PropertyGroup>
 </Project>
