@@ -9,8 +9,8 @@ internal sealed class AppSettings
     internal bool OverlayEnabled { get; set; } = true;
     internal bool HideOriginal { get; set; }
     internal bool RecolourEnabled { get; set; }
-    internal Color OverlayColour { get; set; } = Color.Red;
-    internal decimal ScalePercent { get; set; } = 200;
+    internal int OverlayColourArgb { get; set; } = unchecked((int)0xFFFF0000);
+    internal int ScalePercent { get; set; } = 200;
 
     internal static AppSettings Load()
     {
@@ -36,9 +36,9 @@ internal sealed class AppSettings
                     settings.RecolourEnabled = recolour;
                     break;
                 case "OverlayColour" when int.TryParse(parts[1], out var argb):
-                    settings.OverlayColour = Color.FromArgb(argb);
+                    settings.OverlayColourArgb = argb;
                     break;
-                case "ScalePercent" when decimal.TryParse(parts[1], out var scale):
+                case "ScalePercent" when int.TryParse(parts[1], out var scale):
                     settings.ScalePercent = Math.Clamp(scale, 100, 500);
                     break;
             }
@@ -54,7 +54,7 @@ internal sealed class AppSettings
             $"OverlayEnabled={OverlayEnabled}",
             $"HideOriginal={HideOriginal}",
             $"RecolourEnabled={RecolourEnabled}",
-            $"OverlayColour={OverlayColour.ToArgb()}",
+            $"OverlayColour={OverlayColourArgb}",
             $"ScalePercent={ScalePercent}"
         ]);
     }

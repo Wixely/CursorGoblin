@@ -1,6 +1,6 @@
 # CursorGoblin
 
-CursorGoblin is a small, Windows-only cursor overlay for streaming and screen-capture workflows. It draws a software-rendered, click-through copy over the active Windows cursor, including pointer, hand, text, wait, and resize variants.
+CursorGoblin is a small, Windows-only cursor overlay for streaming and screen-capture workflows. It draws a software-rendered, always-on-top, click-through copy over the active Windows cursor, including pointer, hand, text, wait, and resize variants. Its floating settings window is built with CupriFace.
 
 The original project artwork is stored in `Assets\CursorGoblin.png`; `tools\Create-Icon.ps1` creates the multi-resolution Windows icon used by the executable and configuration form. The artwork was generated specifically for CursorGoblin and does not use third-party icon assets.
 
@@ -21,13 +21,16 @@ The same in-memory images used by the overlay are exported to the PNG cache. The
 Requires the .NET 10 SDK on Windows.
 
 ```powershell
+git submodule update --init --recursive
 dotnet build .\CursorGoblin.csproj
 dotnet run --project .\CursorGoblin.csproj
 ```
 
+CupriFace v0.19.0 is pinned as a Git submodule under `external\CupriFace` so builds do not depend on a separate local checkout.
+
 Use the VS Code `Build` task or `Launch CursorGoblin` debug configuration for interactive development.
 
-For a non-interactive launch/cache smoke test, run `CursorGoblin.exe --smoke-test`; it exits normally after one second.
+For a non-interactive launch/cache/UI smoke test, run `CursorGoblin.exe --smoke-test`. Add `--snapshot <path.png>` to save the headless CupriFace settings render.
 
 ## Publish
 
@@ -39,7 +42,7 @@ dotnet publish .\CursorGoblin.csproj -c Release
 
 The result is written below `bin\Release\net10.0-windows\win-x64\publish`.
 
-NativeAOT is intentionally disabled because .NET 10 does not support trimming WinForms applications (`NETSDK1175`). The published executable therefore embeds the normal .NET runtime.
+NativeAOT is intentionally disabled because CupriFace's current AOT path does not include its desktop hardware-accelerated GL renderer or Windows UI Automation bridge. The published executable embeds the normal .NET runtime and retains the full desktop feature set. Trimming remains disabled until a release-size change can be evaluated against the current functional baseline.
 
 ## Safety note
 

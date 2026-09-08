@@ -1,49 +1,78 @@
-using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
 
 namespace CursorGoblin;
 
-internal sealed class CursorImage : IDisposable
+internal sealed record CursorImage(byte[] Pixels, int Width, int Height, int HotspotX, int HotspotY)
 {
-    internal CursorImage(Bitmap bitmap, Point hotspot)
-    {
-        Bitmap = bitmap;
-        Hotspot = hotspot;
-    }
-
-    internal Bitmap Bitmap { get; }
-    internal Point Hotspot { get; }
-
     internal static CursorImage Capture(IntPtr cursor)
     {
         var width = Math.Max(1, NativeMethods.GetSystemMetrics(NativeMethods.SmCxCursor));
         var height = Math.Max(1, NativeMethods.GetSystemMetrics(NativeMethods.SmCyCursor));
-        var hotspot = Point.Empty;
+        var hotspotX = 0;
+        var hotspotY = 0;
 
-        if (NativeMethods.GetIconInfo(cursor, out var info))
+        if (NativeMethods.GetIconInfo(cursor, out var iconInfo))
         {
-            hotspot = new Point(info.HotspotX, info.HotspotY);
-            if (info.MaskBitmap != IntPtr.Zero)
-                NativeMethods.DeleteObject(info.MaskBitmap);
-            if (info.ColorBitmap != IntPtr.Zero)
-                NativeMethods.DeleteObject(info.ColorBitmap);
+            hotspotX = iconInfo.HotspotX;
+            hotspotY = iconInfo.HotspotY;
+            if (iconInfo.MaskBitmap != IntPtr.Zero)
+                NativeMethods.DeleteObject(iconInfo.MaskBitmap);
+            if (iconInfo.ColorBitmap != IntPtr.Zero)
+                NativeMethods.DeleteObject(iconInfo.ColorBitmap);
         }
 
-        var bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb);
-        using var graphics = Graphics.FromImage(bitmap);
-        graphics.Clear(Color.Transparent);
-        var deviceContext = graphics.GetHdc();
+        var bitmapInfo = CreateBitmapInfo(width, height);
+        var screen = NativeMethods.GetDC(IntPtr.Zero);
+        if (screen == IntPtr.Zero)
+            throw new InvalidOperationException("Windows could not access the screen device context.");
+        var memory = NativeMethods.CreateCompatibleDC(screen);
+        if (memory == IntPtr.Zero)
+        {
+            NativeMethods.ReleaseDC(IntPtr.Zero, screen);
+            throw new InvalidOperationException("Windows could not create a cursor device context.");
+        }
+        var bitmap = NativeMethods.CreateDIBSection(screen, ref bitmapInfo,
+            NativeMethods.DibRgbColors, out var bits, IntPtr.Zero, 0);
+        if (bitmap == IntPtr.Zero || bits == IntPtr.Zero)
+        {
+            NativeMethods.DeleteDC(memory);
+            NativeMethods.ReleaseDC(IntPtr.Zero, screen);
+            throw new InvalidOperationException("Windows could not allocate a cursor bitmap.");
+        }
+
+        var oldBitmap = NativeMethods.SelectObject(memory, bitmap);
         try
         {
-            NativeMethods.DrawIconEx(deviceContext, 0, 0, cursor, width, height, 0,
-                IntPtr.Zero, NativeMethods.DiNormal);
+            var clear = new byte[width * height * 4];
+            Marshal.Copy(clear, 0, bits, clear.Length);
+            if (!NativeMethods.DrawIconEx(memory, 0, 0, cursor, width, height, 0,
+                    IntPtr.Zero, NativeMethods.DiNormal))
+                throw new InvalidOperationException("Windows could not draw the current cursor.");
+
+            var pixels = new byte[clear.Length];
+            Marshal.Copy(bits, pixels, 0, pixels.Length);
+            return new CursorImage(pixels, width, height, hotspotX, hotspotY);
         }
         finally
         {
-            graphics.ReleaseHdc(deviceContext);
+            NativeMethods.SelectObject(memory, oldBitmap);
+            NativeMethods.DeleteObject(bitmap);
+            NativeMethods.DeleteDC(memory);
+            NativeMethods.ReleaseDC(IntPtr.Zero, screen);
         }
-
-        return new CursorImage(bitmap, hotspot);
     }
 
-    public void Dispose() => Bitmap.Dispose();
+    internal static NativeMethods.BitmapInfo CreateBitmapInfo(int width, int height) => new()
+    {
+        Header = new NativeMethods.BitmapInfoHeader
+        {
+            Size = (uint)Marshal.SizeOf<NativeMethods.BitmapInfoHeader>(),
+            Width = width,
+            Height = -height,
+            Planes = 1,
+            BitCount = 32,
+            Compression = NativeMethods.BiRgb,
+            SizeImage = (uint)(width * height * 4)
+        }
+    };
 }

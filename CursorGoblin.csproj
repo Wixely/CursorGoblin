@@ -2,17 +2,26 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
-    <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Platforms>x64</Platforms>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
-    <!-- WinForms is not supported with trimming/NativeAOT (NETSDK1175). -->
+    <!-- Keep the full CupriFace desktop feature set, including hardware GL and Windows UIA. -->
     <PublishTrimmed>false</PublishTrimmed>
     <InvariantGlobalization>true</InvariantGlobalization>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\CursorGoblin.ico</ApplicationIcon>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="external\**\*.cs" />
+    <EmbeddedResource Remove="external\**\*" />
+    <None Remove="external\**\*" />
+    <ProjectReference Include="external\CupriFace\src\CupriFace.Shell\CupriFace.Shell.csproj"
+                      AdditionalProperties="Configuration=$(Configuration)" />
+    <EmbeddedResource Include="Assets\CursorGoblin.png" LogicalName="Assets/CursorGoblin.png" />
+  </ItemGroup>
 </Project>

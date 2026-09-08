@@ -1,8 +1,9 @@
-using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
+using SkiaSharp;
 
 namespace CursorGoblin;
 
-internal sealed class CursorStore : IDisposable
+internal sealed class CursorStore
 {
     private static readonly (string Name, IntPtr Id)[] CursorKinds =
     [
@@ -24,7 +25,8 @@ internal sealed class CursorStore : IDisposable
         ("person", NativeMethods.IdcPerson)
     ];
 
-    private readonly Dictionary<IntPtr, CursorImage> images = [];
+    private readonly object sync = new();
+    private Dictionary<IntPtr, CursorImage> images = [];
 
     internal CursorStore()
     {
@@ -34,12 +36,12 @@ internal sealed class CursorStore : IDisposable
     }
 
     internal string CacheDirectory { get; }
-    internal int Count => images.Count;
+    internal int Count { get { lock (sync) return images.Count; } }
 
     internal void Refresh()
     {
-        DisposeImages();
         Directory.CreateDirectory(CacheDirectory);
+        var refreshed = new Dictionary<IntPtr, CursorImage>();
 
         foreach (var (name, id) in CursorKinds)
         {
@@ -48,30 +50,38 @@ internal sealed class CursorStore : IDisposable
                 continue;
 
             var image = CursorImage.Capture(handle);
-            image.Bitmap.Save(Path.Combine(CacheDirectory, name + ".png"), ImageFormat.Png);
-            if (!images.TryAdd(handle, image))
-                image.Dispose();
+            SavePng(image, Path.Combine(CacheDirectory, name + ".png"));
+            refreshed.TryAdd(handle, image);
         }
+
+        lock (sync)
+            images = refreshed;
     }
 
     internal CursorImage? Get(IntPtr handle)
     {
         if (handle == IntPtr.Zero)
             return null;
-        if (images.TryGetValue(handle, out var image))
+
+        lock (sync)
+        {
+            if (images.TryGetValue(handle, out var image))
+                return image;
+
+            image = CursorImage.Capture(handle);
+            images.Add(handle, image);
             return image;
-
-        image = CursorImage.Capture(handle);
-        images.Add(handle, image);
-        return image;
+        }
     }
 
-    private void DisposeImages()
+    private static void SavePng(CursorImage image, string path)
     {
-        foreach (var image in images.Values)
-            image.Dispose();
-        images.Clear();
+        var info = new SKImageInfo(image.Width, image.Height, SKColorType.Bgra8888, SKAlphaType.Premul);
+        using var bitmap = new SKBitmap(info);
+        Marshal.Copy(image.Pixels, 0, bitmap.GetPixels(), image.Pixels.Length);
+        using var skImage = SKImage.FromBitmap(bitmap);
+        using var data = skImage.Encode(SKEncodedImageFormat.Png, 100);
+        using var stream = File.Create(path);
+        data.SaveTo(stream);
     }
-
-    public void Dispose() => DisposeImages();
 }
