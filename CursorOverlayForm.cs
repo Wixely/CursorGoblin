@@ -108,6 +108,9 @@ internal sealed class CursorOverlayForm : Form
             Location = new Point(x, y);
         if (!Visible)
             Show();
+        NativeMethods.SetWindowPos(Handle, NativeMethods.HwndTopMost, 0, 0, 0, 0,
+            NativeMethods.SwpNoMove | NativeMethods.SwpNoSize |
+            NativeMethods.SwpNoActivate | NativeMethods.SwpShowWindow);
         Invalidate();
     }
 

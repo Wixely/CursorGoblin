@@ -7,6 +7,12 @@ internal static class NativeMethods
     internal const int SmCxCursor = 13;
     internal const int SmCyCursor = 14;
     internal const int DiNormal = 0x0003;
+    internal const uint SwpNoSize = 0x0001;
+    internal const uint SwpNoMove = 0x0002;
+    internal const uint SwpNoActivate = 0x0010;
+    internal const uint SwpShowWindow = 0x0040;
+
+    internal static readonly IntPtr HwndTopMost = new(-1);
 
     internal static readonly IntPtr IdcArrow = 32512;
     internal static readonly IntPtr IdcIBeam = 32513;
@@ -72,6 +78,11 @@ internal static class NativeMethods
 
     [DllImport("user32.dll")]
     internal static extern int GetSystemMetrics(int index);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static extern bool SetWindowPos(IntPtr window, IntPtr insertAfter,
+        int x, int y, int width, int height, uint flags);
 
     [DllImport("gdi32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]

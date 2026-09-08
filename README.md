@@ -5,7 +5,7 @@ CursorGoblin is a small, Windows-only cursor overlay for streaming and screen-ca
 ## Features
 
 - Mirrors the cursor currently selected by Windows.
-- Keeps the overlay topmost, non-activating, and click-through.
+- Keeps the overlay topmost, non-activating, and click-through, and actively reasserts its topmost position while running.
 - Optionally hides the original Windows cursor.
 - Recolours the overlay to a solid chosen colour while retaining transparency.
 - Scales the overlay from 100% to 500%.
