@@ -8,6 +8,8 @@ internal sealed class CursorOverlayForm : Form
     private const int WsExTransparent = 0x00000020;
     private const int WsExToolWindow = 0x00000080;
     private const int WsExNoActivate = 0x08000000;
+    private const int WmNcHitTest = 0x0084;
+    private static readonly IntPtr HtTransparent = new(-1);
     private readonly CursorStore cursorStore;
     private readonly AppSettings settings;
     private readonly System.Windows.Forms.Timer trackingTimer;
@@ -47,6 +49,17 @@ internal sealed class CursorOverlayForm : Form
     }
 
     protected override bool ShowWithoutActivation => true;
+
+    protected override void WndProc(ref Message message)
+    {
+        if (message.Msg == WmNcHitTest)
+        {
+            message.Result = HtTransparent;
+            return;
+        }
+
+        base.WndProc(ref message);
+    }
 
     internal void ApplySettings()
     {
