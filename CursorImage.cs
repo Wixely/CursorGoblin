@@ -15,6 +15,12 @@ internal sealed record CursorImage(byte[] Pixels, int Width, int Height, int Hot
         {
             hotspotX = iconInfo.HotspotX;
             hotspotY = iconInfo.HotspotY;
+            if (TryGetBitmapSize(iconInfo.ColorBitmap, false, out var bitmapWidth, out var bitmapHeight) ||
+                TryGetBitmapSize(iconInfo.MaskBitmap, true, out bitmapWidth, out bitmapHeight))
+            {
+                width = bitmapWidth;
+                height = bitmapHeight;
+            }
             if (iconInfo.MaskBitmap != IntPtr.Zero)
                 NativeMethods.DeleteObject(iconInfo.MaskBitmap);
             if (iconInfo.ColorBitmap != IntPtr.Zero)
@@ -60,6 +66,22 @@ internal sealed record CursorImage(byte[] Pixels, int Width, int Height, int Hot
             NativeMethods.DeleteDC(memory);
             NativeMethods.ReleaseDC(IntPtr.Zero, screen);
         }
+    }
+
+    private static bool TryGetBitmapSize(IntPtr bitmap, bool monochromeMask,
+        out int width, out int height)
+    {
+        width = 0;
+        height = 0;
+        if (bitmap == IntPtr.Zero || NativeMethods.GetBitmapObject(bitmap,
+                Marshal.SizeOf<NativeMethods.NativeBitmap>(), out var details) == 0)
+            return false;
+
+        width = Math.Abs(details.Width);
+        height = Math.Abs(details.Height);
+        if (monochromeMask)
+            height /= 2;
+        return width > 0 && height > 0;
     }
 
     internal static NativeMethods.BitmapInfo CreateBitmapInfo(int width, int height) => new()

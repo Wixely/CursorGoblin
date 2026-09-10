@@ -111,6 +111,18 @@ internal static class NativeMethods
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    internal struct NativeBitmap
+    {
+        internal int Type;
+        internal int Width;
+        internal int Height;
+        internal int WidthBytes;
+        internal ushort Planes;
+        internal ushort BitsPixel;
+        internal IntPtr Bits;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     internal struct BlendFunction
     {
         internal byte BlendOp;
@@ -259,6 +271,10 @@ internal static class NativeMethods
 
     [DllImport("gdi32.dll")]
     internal static extern IntPtr SelectObject(IntPtr deviceContext, IntPtr graphicObject);
+
+    [DllImport("gdi32.dll", EntryPoint = "GetObjectW")]
+    internal static extern int GetBitmapObject(IntPtr graphicObject, int bufferSize,
+        out NativeBitmap bitmap);
 
     [DllImport("gdi32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]

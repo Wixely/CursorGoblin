@@ -26,7 +26,6 @@ internal sealed class ConfigurationApp : CupriApp
     public override bool Transparent => true;
     public override bool Frameless => true;
     public override bool CloseToTray => true;
-    public override bool DarkWindowChrome => true;
     public override string TrayCloseLabel => "Exit CursorGoblin";
     public override SKColor Background => SKColors.Transparent;
     public override object Model => model;
@@ -98,7 +97,6 @@ internal sealed class ConfigurationApp : CupriApp
           border-radius:18px;
           background:#151a14f5;
           border:1px #9ef91870;
-          box-shadow:0 18px 48px #00000070;
         }
         header {
           display:flex;

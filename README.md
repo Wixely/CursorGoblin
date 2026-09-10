@@ -26,7 +26,7 @@ dotnet build .\CursorGoblin.csproj
 dotnet run --project .\CursorGoblin.csproj
 ```
 
-CupriFace v0.19.0 is pinned as a Git submodule under `external\CupriFace` so builds do not depend on a separate local checkout.
+CupriFace v0.20.0 is pinned as a Git submodule under `external\CupriFace` so builds do not depend on a separate local checkout. CursorGoblin declares Per-Monitor-V2 awareness and uses CupriFace's device-scale tracking for crisp logical sizing across monitors.
 
 Use the VS Code `Build` task or `Launch CursorGoblin` debug configuration for interactive development.
 
@@ -42,7 +42,7 @@ dotnet publish .\CursorGoblin.csproj -c Release
 
 The result is written below `bin\Release\net10.0-windows\win-x64\publish`.
 
-NativeAOT is intentionally disabled because CupriFace's current AOT path does not include its desktop hardware-accelerated GL renderer or Windows UI Automation bridge. The published executable embeds the normal .NET runtime and retains the full desktop feature set. Trimming remains disabled until a release-size change can be evaluated against the current functional baseline.
+NativeAOT is intentionally disabled so the published application retains CupriFace's normal hardware-accelerated desktop GL path. The executable embeds the .NET runtime and retains the full desktop feature set. Trimming remains disabled until a release-size change can be evaluated against the current functional baseline.
 
 ## Safety note
 
