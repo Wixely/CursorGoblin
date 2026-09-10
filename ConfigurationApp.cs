@@ -25,6 +25,7 @@ internal sealed class ConfigurationApp : CupriApp
     public override int Height => 590;
     public override bool Transparent => true;
     public override bool Frameless => true;
+    public override bool TopMost => true;
     public override bool CloseToTray => true;
     public override string TrayCloseLabel => "Exit CursorGoblin";
     public override SKColor Background => SKColors.Transparent;
