@@ -20,8 +20,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          # Keep the SDK's implicit runtime-pack dependencies aligned with packages.lock.json.
-          dotnet-version: 10.0.108
+          global-json-file: global.json
 
       - name: Restore locked dependencies
         run: dotnet restore .\CursorGoblin.csproj --locked-mode
