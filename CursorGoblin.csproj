@@ -14,14 +14,14 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\CursorGoblin.ico</ApplicationIcon>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Remove="external\**\*.cs" />
     <EmbeddedResource Remove="external\**\*" />
     <None Remove="external\**\*" />
-    <ProjectReference Include="external\CupriFace\src\CupriFace.Shell\CupriFace.Shell.csproj"
-                      AdditionalProperties="Configuration=$(Configuration)" />
+    <PackageReference Include="CupriFace.Shell" Version="0.23.0" />
     <EmbeddedResource Include="Assets\CursorGoblin.png" LogicalName="Assets/CursorGoblin.png" />
   </ItemGroup>
 </Project>

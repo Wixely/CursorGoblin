@@ -67,7 +67,9 @@ try
 
     try
     {
-        DesktopHost.Run(app);
+        // Render on the GPU off-screen, then use Windows per-pixel alpha presentation to avoid
+        // the black transparent margins of the normal WGL swap chain on this display path.
+        DesktopHost.RunWithLayeredGpu(app);
     }
     finally
     {

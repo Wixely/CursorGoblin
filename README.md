@@ -21,12 +21,20 @@ The same in-memory images used by the overlay are exported to the PNG cache. The
 Requires the .NET 10 SDK on Windows.
 
 ```powershell
-git submodule update --init --recursive
 dotnet build .\CursorGoblin.csproj
 dotnet run --project .\CursorGoblin.csproj
 ```
 
-CupriFace v0.20.0 is pinned as a Git submodule under `external\CupriFace` so builds do not depend on a separate local checkout. CursorGoblin declares Per-Monitor-V2 awareness and uses CupriFace's device-scale tracking for crisp logical sizing across monitors.
+CursorGoblin uses the released `CupriFace.Shell` 0.23.0 NuGet package. The package and its
+transitive `CupriFace` dependency are vendored from the corresponding GitHub release so
+private GitLab and local builds do not need GitHub Packages credentials. See
+[`packages/README.md`](packages/README.md) for provenance and update instructions.
+CursorGoblin declares Per-Monitor-V2 awareness and uses CupriFace's device-scale tracking
+for crisp logical sizing across monitors.
+
+The settings window uses CupriFace's off-screen GPU rendering with native Windows per-pixel alpha, released after [CupriFace PR #140](https://github.com/Wixely/CupriFace/pull/140). Skia draws on the GPU, then reads changed frames back for Windows alpha presentation. This avoids black transparent margins reproduced with the normal OpenGL swap chain on the tested Windows 11 machine. It is GPU-accelerated drawing with a CPU presentation copy, not a zero-copy DirectComposition backend. Idle windows do not repeatedly render or read back. The separate always-on-top cursor overlay is unchanged.
+
+For troubleshooting, set `CUPRIFACE_SOFTWARE=1` before launching to use the fully software-rendered alpha path. The startup diagnostic identifies which rendering path is active.
 
 Use the VS Code `Build` task or `Launch CursorGoblin` debug configuration for interactive development.
 
@@ -42,7 +50,7 @@ dotnet publish .\CursorGoblin.csproj -c Release
 
 The result is written below `bin\Release\net10.0-windows\win-x64\publish`.
 
-NativeAOT is intentionally disabled so the published application retains CupriFace's normal hardware-accelerated desktop GL path. The executable embeds the .NET runtime and retains the full desktop feature set. Trimming remains disabled until a release-size change can be evaluated against the current functional baseline.
+NativeAOT and trimming remain disabled; changing the settings presentation path does not establish AOT/trimming compatibility for the remaining dependencies. The executable embeds the .NET runtime.
 
 ## Safety note
 
