@@ -16,8 +16,7 @@ internal sealed class ConfigurationApp : CupriApp
         bool persistSettings = true)
     {
         this.cursorStore = cursorStore;
-        model = new ConfigurationModel(settings, overlay, cursorStore.Count, cursorStore.CacheDirectory,
-            persistSettings);
+        model = new ConfigurationModel(settings, overlay, cursorStore.Count, persistSettings);
     }
 
     public override string Title => WindowTitle;
@@ -42,7 +41,9 @@ internal sealed class ConfigurationApp : CupriApp
                   <div class="subtitle">Streaming cursor overlay</div>
                 </div>
               </div>
-              <cupri-button class="close-window" variant="ghost" aria-label="Hide settings">×</cupri-button>
+              <div class="header-actions">
+                <cupri-button class="close-window" variant="ghost" aria-label="Hide settings">&#215;</cupri-button>
+              </div>
             </header>
 
             <main>
@@ -63,7 +64,7 @@ internal sealed class ConfigurationApp : CupriApp
 
               <div class="field-row">
                 <label><strong>Overlay colour</strong><small>Used when recolouring is enabled.</small></label>
-                <cupri-color value="{{OverlayColour}}" aria-label="Overlay colour"></cupri-color>
+                <cupri-color value="{{OverlayColour}}" open="{{OverlayColourOpen}}" aria-label="Overlay colour"></cupri-color>
               </div>
               <div class="field-row">
                 <label><strong>Overlay size</strong><small>100% to 500% of the system cursor.</small></label>
@@ -74,9 +75,28 @@ internal sealed class ConfigurationApp : CupriApp
                 <cupri-button class="refresh" variant="primary">Refresh cursor images</cupri-button>
                 <cupri-button class="open-folder" variant="ghost">Open image folder</cupri-button>
               </div>
-              <div class="status">{{CacheStatus}}</div>
+              <div class="footer">
+                <div class="status">{{CacheStatus}}</div>
+                <cupri-button class="about" variant="ghost">About</cupri-button>
+              </div>
             </main>
           </section>
+
+          <cupri-dialog class="about-dialog" open="{{AboutOpen}}" blur="true">
+            <div class="about-brand">
+              <cupri-image src="Assets/CursorGoblin.png" aria-label="CursorGoblin icon"></cupri-image>
+              <div>
+                <div class="about-title">CursorGoblin</div>
+                <div class="about-subtitle">Streaming cursor overlay for Windows</div>
+              </div>
+            </div>
+            <p>CursorGoblin keeps a software-rendered pointer visible in streams and display captures.</p>
+            <p class="about-built-with">The settings interface is powered by CupriFace.</p>
+            <a class="github-link" href="https://github.com/Wixely/CursorGoblin">View CursorGoblin on GitHub &#8599;</a>
+            <div class="about-buttons">
+              <cupri-button class="about-close" variant="ghost">Close</cupri-button>
+            </div>
+          </cupri-dialog>
         </body>
         """;
 
@@ -109,7 +129,18 @@ internal sealed class ConfigurationApp : CupriApp
         cupri-image { width:38px; height:38px; }
         .title { color:#ffffff; font-size:17px; font-weight:bold; }
         .subtitle { color:#94a18e; font-size:11px; margin-top:2px; }
-        .close-window { margin-right:10px; min-width:34px; padding:5px 9px; font-size:18px; }
+        .header-actions { display:flex; align-items:center; margin-right:10px; }
+        .close-window {
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          width:38px;
+          height:38px;
+          min-width:38px;
+          padding:0px;
+          font-size:20px;
+          line-height:20px;
+        }
         main { padding:17px 20px 20px; }
         .intro { color:#aab5a4; font-size:13px; margin:0px 0px 15px; }
         .setting, .field-row {
@@ -126,8 +157,24 @@ internal sealed class ConfigurationApp : CupriApp
         cupri-number { width:112px; }
         cupri-color { width:180px; }
         .actions { display:flex; gap:9px; margin-top:17px; }
-        .refresh { flex-grow:1; }
-        .status { color:#7f8a79; font-size:10px; margin-top:13px; }
+        .refresh { flex-grow:1; color:#11170e; }
+        .footer { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:11px; }
+        .status { color:#7f8a79; font-size:10px; }
+        .about { padding:5px 11px; font-size:11px; }
+        .about-dialog .cupri-dialog-panel {
+          width:340px;
+          background:#1b2119;
+          color:#f3f6ed;
+          border:1px #9ef91870;
+        }
+        .about-brand { display:flex; align-items:center; gap:12px; margin-bottom:17px; }
+        .about-brand cupri-image { width:44px; height:44px; }
+        .about-title { color:#ffffff; font-size:20px; font-weight:bold; }
+        .about-subtitle { color:#94a18e; font-size:11px; margin-top:3px; }
+        .about-dialog p { color:#aab5a4; font-size:13px; line-height:18px; margin:0px 0px 10px; }
+        .about-built-with { color:#84907e; }
+        .github-link { display:block; margin-top:17px; color:#9ef918; font-size:13px; font-weight:bold; }
+        .about-buttons { display:flex; justify-content:flex-end; margin-top:22px; }
         """;
 
     public override void Configure(CupriDocument document)
@@ -150,6 +197,16 @@ internal sealed class ConfigurationApp : CupriApp
             FileName = cursorStore.CacheDirectory,
             UseShellExecute = true
         }));
+        document.OnClick(".about", _ =>
+        {
+            model.AboutOpen = true;
+            document.Refresh();
+        });
+        document.OnClick(".about-close", _ =>
+        {
+            model.AboutOpen = false;
+            document.Refresh();
+        });
         document.OnClick(".close-window", _ =>
         {
             var window = NativeMethods.FindWindow(null, WindowTitle);
@@ -167,15 +224,19 @@ internal sealed partial class ConfigurationModel
     private string cacheStatus;
 
     internal ConfigurationModel(AppSettings settings, NativeCursorOverlay overlay,
-        int cursorCount, string cacheDirectory, bool persistSettings)
+        int cursorCount, bool persistSettings)
     {
         this.settings = settings;
         this.overlay = overlay;
         this.persistSettings = persistSettings;
-        cacheStatus = $"{cursorCount} cursor variants cached in {cacheDirectory}";
+        cacheStatus = $"{cursorCount} cursor variants cached.";
     }
 
     private readonly bool persistSettings;
+
+    public bool OverlayColourOpen { get; set; }
+
+    public bool AboutOpen { get; set; }
 
     public bool OverlayEnabled
     {
