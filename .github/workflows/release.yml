@@ -1,0 +1,66 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Publish Windows x64 release
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore locked dependencies
+        run: dotnet restore .\CursorGoblin.csproj --locked-mode
+
+      - name: Publish
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version = '${{ github.ref_name }}' -replace '^v', ''
+          dotnet publish .\CursorGoblin.csproj `
+            --configuration Release `
+            --no-restore `
+            --output .\artifacts\publish `
+            -p:Version=$version
+
+      - name: Package release
+        id: package
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $archiveName = "CursorGoblin-${{ github.ref_name }}-win-x64.zip"
+          $archivePath = Join-Path $PWD "artifacts\$archiveName"
+          Compress-Archive -Path .\artifacts\publish\CursorGoblin.exe -DestinationPath $archivePath
+
+          $checksumName = 'SHA256SUMS.txt'
+          $checksumPath = Join-Path $PWD "artifacts\$checksumName"
+          $hash = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $archiveName" | Set-Content -LiteralPath $checksumPath -Encoding ascii
+
+          "archive=$archivePath" >> $env:GITHUB_OUTPUT
+          "checksum=$checksumPath" >> $env:GITHUB_OUTPUT
+
+      - name: Create GitHub release
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create '${{ github.ref_name }}' `
+            '${{ steps.package.outputs.archive }}' `
+            '${{ steps.package.outputs.checksum }}' `
+            --generate-notes `
+            --title "CursorGoblin ${{ github.ref_name }}" `
+            --verify-tag
