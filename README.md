@@ -83,7 +83,31 @@ dotnet publish .\CursorGoblin.csproj -c Release
 
 The result is written below `bin\Release\net10.0-windows\win-x64\publish`.
 
-NativeAOT and trimming remain disabled; changing the settings presentation path does not establish AOT/trimming compatibility for the remaining dependencies. The executable embeds the .NET runtime.
+The default publish does not trim and does not use NativeAOT. The executable embeds the .NET runtime.
+
+### Opt-in publish gates
+
+Two MSBuild properties enable experimental publish shapes without changing the default output:
+
+| Flag | Effect | Status |
+|---|---|---|
+| `-p:Trim=true` | `PublishTrimmed` with `TrimMode=partial`, `SuppressTrimAnalysisWarnings`, `BuiltInComInteropSupport=true`, and `EnableCompressionInSingleFile`, the same set Bantz ships with `CupriFace.Shell` 0.23.0. | Under evaluation |
+| `-p:Aot=true` | `PublishAot`. | Gate only, not validated |
+
+```powershell
+dotnet publish .\CursorGoblin.csproj -c Release -p:Trim=true
+```
+
+Partial trimming trims only assemblies that declare themselves trimmable, which is the .NET
+framework. AngleSharp, Silk.NET, and the CupriFace shell are copied whole because they resolve
+types by reflection. `BuiltInComInteropSupport` keeps the COM interop that the shell's UI
+Automation bridge depends on. Release builds stay untrimmed until a trimmed build has been
+checked for hardware-GL overlay rendering, screen-reader access to the settings window, and
+cursor export.
+
+Do not treat `-p:Aot=true` as a working configuration yet. Trim compatibility is not evidence of AOT
+compatibility, and `PublishSingleFile` and `IncludeAllContentForSelfExtract` do not apply to
+NativeAOT, so an AOT build is a different packaging shape that needs its own evaluation.
 
 ## Troubleshooting
 

@@ -8,8 +8,26 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
-    <!-- Keep the full CupriFace desktop feature set, including hardware GL and Windows UIA. -->
-    <PublishTrimmed>false</PublishTrimmed>
+    <!-- Keep the full CupriFace desktop feature set, including hardware GL and Windows UIA.
+         Left unset under -p:Aot=true so the SDK's own AOT trimming defaults apply. -->
+    <PublishTrimmed Condition="'$(Aot)' != 'true'">false</PublishTrimmed>
+    <!-- Opt-in trimmed publish (-p:Trim=true) for evaluation; the default publish is unchanged.
+         Mirrors the property set Bantz ships with the same CupriFace.Shell 0.23.0 package. -->
+    <PublishTrimmed Condition="'$(Trim)' == 'true'">true</PublishTrimmed>
+    <!-- Partial trims only assemblies that declare themselves trimmable, which is the framework.
+         AngleSharp, Silk.NET, and the CupriFace shell resolve types by reflection, so they are
+         copied whole rather than trimmed. -->
+    <TrimMode Condition="'$(Trim)' == 'true'">partial</TrimMode>
+    <!-- Those dependencies raise trim analysis warnings this repository cannot fix. -->
+    <SuppressTrimAnalysisWarnings Condition="'$(Trim)' == 'true'">true</SuppressTrimAnalysisWarnings>
+    <!-- Trimming turns built-in COM interop off by default, which would break the shell's
+         UI Automation bridge. -->
+    <BuiltInComInteropSupport Condition="'$(Trim)' == 'true'">true</BuiltInComInteropSupport>
+    <EnableCompressionInSingleFile Condition="'$(Trim)' == 'true'">true</EnableCompressionInSingleFile>
+    <!-- NativeAOT gate only. An AOT publish has NOT been validated here (nor in Shade or Bantz):
+         trim compatibility is not evidence of AOT compatibility, and PublishSingleFile /
+         IncludeAllContentForSelfExtract do not apply to AOT. Treat it as a separate experiment. -->
+    <PublishAot Condition="'$(Aot)' == 'true'">true</PublishAot>
     <InvariantGlobalization>true</InvariantGlobalization>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\CursorGoblin.ico</ApplicationIcon>
