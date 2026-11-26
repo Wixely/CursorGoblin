@@ -3,6 +3,14 @@ using CupriFace.Interaction;
 using CupriFace.Shell;
 using CursorGoblin;
 
+// Quits the running instance and exits: 0 when it has gone or was not running, 3 when it could not
+// be reached. Checked before the instance lock so the request never raises the running window.
+if (args.Contains("--exit", StringComparer.OrdinalIgnoreCase))
+{
+    Environment.ExitCode = InstanceExit.Request("Local\\CursorGoblin", TimeSpan.FromSeconds(15));
+    return;
+}
+
 var isSmokeTest = args.Contains("--smoke-test", StringComparer.OrdinalIgnoreCase);
 var mutexName = isSmokeTest
     ? $"Local\\CursorGoblin.SmokeTest.{Environment.ProcessId}"
@@ -122,6 +130,15 @@ try
         }
         return;
     }
+
+    // The window loop cannot return on request — closing only hides to the tray — so an exit request
+    // restores the system cursor and saves settings here, then ends the process.
+    using var exitListener = InstanceExit.Listen(() =>
+    {
+        overlay.Dispose();
+        settings.Save();
+        Environment.Exit(0);
+    });
 
     try
     {

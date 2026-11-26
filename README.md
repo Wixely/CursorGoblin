@@ -73,6 +73,11 @@ For a non-interactive cache, rendering, binding, colour-palette, and modal smoke
 `CursorGoblin.exe --smoke-test`. Add `--snapshot <path.png>` to save a headless CupriFace
 settings render. The checked-in screenshot above is generated through that path.
 
+Closing the settings window keeps CursorGoblin in the tray. `CursorGoblin.exe --exit` quits the
+running instance instead, restoring the system cursor and saving settings, which is how updaters
+such as Multitool stop it. It exits with 0 once CursorGoblin has gone or was not running, and 3 when
+the running instance could not be reached.
+
 ## Publish
 
 The project is configured for a self-contained, single-file Windows x64 executable:
